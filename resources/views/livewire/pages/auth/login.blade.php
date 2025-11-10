@@ -37,7 +37,7 @@ new #[Layout('layouts.auth'), Title('Login')] class extends Component
                 </div>
             </a>
             <div>
-                <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-100">Masuk ke RENTAL PEES</h1>
+                <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-100">Masuk ke {{ config('app.name', 'LOS SEKOLITOS') }}</h1>
                 <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Kelola rental PlayStation Anda</p>
             </div>
         </div>

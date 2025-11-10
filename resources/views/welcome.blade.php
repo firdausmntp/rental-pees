@@ -130,7 +130,7 @@
             <div class="mb-16 text-center">
                 <span
                     class="inline-flex items-center gap-2 rounded-full bg-sky-100 dark:bg-sky-900/50 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 mb-4">
-                    <i class='bx bxs-bolt-circle text-xl'></i> Kenapa Rental PEES?
+                    <i class='bx bxs-bolt-circle text-xl'></i> Kenapa {{ config('app.name', 'LOS SEKOLITOS') }}?
                 </span>
                 <h2 class="text-4xl font-extrabold text-slate-800 dark:text-slate-100 sm:text-5xl">
                     Fitur Terbaik untuk Pengalaman Main yang <span class="text-sky-600 dark:text-sky-400">Maksimal</span>

@@ -162,8 +162,8 @@
                             <div class="flex items-center gap-3 mb-4">
                                 
                                 <div class="flex flex-col">
-                                    <span class="text-xl font-bold">{{ config('app.name', 'RENTAL PEES') }}</span>
-                                    <span class="text-xs text-sky-400">Rental PEES</span>
+                                    <span class="text-xl font-bold">{{ config('app.name', 'LOS SEKOLITOS') }}</span>
+                                    <span class="text-xs text-sky-400">{{ config('app.name', 'LOS SEKOLITOS') }}</span>
                                 </div>
                             </div>
                             <p class="text-sm text-slate-300 mb-4 max-w-md">
@@ -303,10 +303,10 @@
                     <p class="mb-4"><strong>Terakhir diperbarui:</strong> {{ now()->format('d F Y') }}</p>
                     
                     <h4 class="text-lg font-semibold mt-6 mb-2">1. Penerimaan Syarat</h4>
-                    <p class="mb-4">Dengan mengakses dan menggunakan layanan RENTAL PEES, Anda menyetujui untuk terikat dengan syarat dan ketentuan ini.</p>
+                    <p class="mb-4">Dengan mengakses dan menggunakan layanan {{ config('app.name', 'LOS SEKOLITOS') }}, Anda menyetujui untuk terikat dengan syarat dan ketentuan ini.</p>
 
                     <h4 class="text-lg font-semibold mt-6 mb-2">2. Layanan Rental PlayStation</h4>
-                    <p class="mb-4">RENTAL PEES menyediakan layanan rental PlayStation dengan sistem voucher digital dan live monitoring. Ketentuan penggunaan:</p>
+                    <p class="mb-4">{{ config('app.name', 'LOS SEKOLITOS') }} menyediakan layanan rental PlayStation dengan sistem voucher digital dan live monitoring. Ketentuan penggunaan:</p>
                     <ul class="list-disc ml-6 mb-4">
                         <li>Waktu rental sesuai dengan voucher yang dibeli</li>
                         <li>Pengguna wajib merawat peralatan dengan baik</li>
@@ -349,7 +349,7 @@
                     </ul>
 
                     <h4 class="text-lg font-semibold mt-6 mb-2">7. Tanggung Jawab</h4>
-                    <p class="mb-4">RENTAL PEES tidak bertanggung jawab atas:</p>
+                    <p class="mb-4">{{ config('app.name', 'LOS SEKOLITOS') }} tidak bertanggung jawab atas:</p>
                     <ul class="list-disc ml-6 mb-4">
                         <li>Kehilangan data game yang tersimpan</li>
                         <li>Gangguan layanan di luar kendali kami</li>

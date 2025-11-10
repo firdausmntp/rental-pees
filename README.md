@@ -102,6 +102,7 @@ php artisan key:generate
 
 Edit file `.env` dan sesuaikan konfigurasi database:
 
+**Local SQL Server:**
 ```env
 DB_CONNECTION=sqlsrv
 DB_HOST=localhost
@@ -109,7 +110,26 @@ DB_PORT=1433
 DB_DATABASE=rental_pees
 DB_USERNAME=sa
 DB_PASSWORD=YourPassword
+DB_TRUST_SERVER_CERTIFICATE=true
 ```
+
+**Remote SQL Server (dengan instance name):**
+```env
+DB_CONNECTION=sqlsrv
+DB_HOST=sql.bsite.net\MSSQL2016
+DB_PORT=
+DB_DATABASE=ripron_rentalpees
+DB_USERNAME=ripron_rentalpees
+DB_PASSWORD=oke123
+DB_TRUST_SERVER_CERTIFICATE=true
+DB_ENCRYPT=no
+```
+
+> **Important Notes:**
+> - Jika host menggunakan instance name (contoh: `server\INSTANCE`), gunakan **single backslash** tanpa quotes
+> - **PORT dikosongkan** untuk named instance (biarkan `DB_PORT=`)
+> - Set `DB_ENCRYPT=no` jika server tidak support encryption
+> - Set `DB_TRUST_SERVER_CERTIFICATE=true` untuk bypass SSL verification
 
 ### 5. Konfigurasi Email (SMTP)
 
@@ -134,9 +154,19 @@ MAIL_FROM_NAME="Rental PS Management"
 # Run migrations
 php artisan migrate
 
-# Run seeders (optional)
+# Run seeders (creates default users, tarifs, and PlayStation data)
 php artisan db:seed
+
+# Or seed specific seeder only
+php artisan db:seed --class=UserSeeder
+php artisan db:seed --class=TarifSeeder
+php artisan db:seed --class=PlayStationSeeder
+
+# Fresh install (drop all tables and reseed)
+php artisan migrate:fresh --seed
 ```
+
+> **Note**: Jika ada error duplicate key saat seeding, jalankan seeder spesifik saja atau gunakan `migrate:fresh --seed`
 
 ### 7. Storage Link
 
@@ -248,6 +278,51 @@ Voucher → Transaksi (one-to-one, nullable)
 # Linux: sudo apt-get install msodbcsql17
 ```
 
+**Common Issues:**
+
+1. **Named Instance Format**:
+   - ✅ Correct: `DB_HOST=server\INSTANCE` (single backslash, no quotes, no port)
+   - ❌ Wrong: `DB_HOST="server\\INSTANCE"` atau `DB_HOST=server,1433`
+   - Leave `DB_PORT=` empty for named instances!
+
+2. **Timeout Errors**:
+   ```
+   TCP Provider: The wait operation timed out
+   ```
+   - Check format: Use `server\instance` NOT `server,port`
+   - Verify server accessible: `ping server-name`
+   - Firewall might be blocking
+
+3. **SSL/Encryption Issues**:
+   - Set `DB_ENCRYPT=no` if server doesn't support encryption
+   - Set `DB_TRUST_SERVER_CERTIFICATE=true` for self-signed certs
+
+**Test Connection:**
+```bash
+# Clear cache terlebih dahulu
+php artisan config:clear
+
+# Test dengan migrate status
+php artisan migrate:status
+
+# Atau test langsung dengan tinker
+php artisan tinker
+>>> DB::connection()->getPdo();
+```
+
+**Native PHP Test Script**:
+```php
+<?php
+$conn = sqlsrv_connect("server\INSTANCE", [
+    "Database" => "dbname",
+    "Uid" => "username",
+    "PWD" => "password",
+    "TrustServerCertificate" => true
+]);
+if ($conn) echo "Connected!";
+else print_r(sqlsrv_errors());
+```
+
 ### Storage Permission
 
 ```bash
@@ -313,6 +388,65 @@ php artisan config:clear
 2. PS status updated to `Sedang Digunakan`
 3. Return transaksi (calculate duration & cost)
 4. PS status back to `Tersedia`
+
+## 🚀 Production Deployment
+
+### Remote Database Setup (bsite.net / Smart ASP.NET)
+
+1. **Database Configuration**:
+   ```env
+   DB_CONNECTION=sqlsrv
+   DB_HOST=sql.bsite.net\MSSQL2016
+   DB_PORT=
+   DB_DATABASE=your_database
+   DB_USERNAME=your_username
+   DB_PASSWORD=your_password
+   DB_TRUST_SERVER_CERTIFICATE=true
+   DB_ENCRYPT=no
+   ```
+
+2. **Run Migrations**:
+   ```bash
+   php artisan migrate
+   php artisan db:seed
+   ```
+
+3. **Optimize for Production**:
+   ```bash
+   # Cache configuration
+   php artisan config:cache
+   
+   # Cache routes
+   php artisan route:cache
+   
+   # Cache views
+   php artisan view:cache
+   
+   # Build assets
+   npm run build
+   ```
+
+4. **Environment Variables**:
+   - Set `APP_ENV=production`
+   - Set `APP_DEBUG=false`
+   - Update `APP_URL` ke domain production
+   - Ganti SMTP dari Ethereal ke provider real
+
+### Seeded Data Summary
+
+Setelah seeding, data berikut akan tersedia:
+
+**Users:**
+- Owner: `owner@rental-ps.com` / `owner123`
+- Karyawan: `karyawan@rental-ps.com` / `karyawan123`
+- Member: `member@rental-ps.com` / `member123`
+
+**Tarifs:**
+- PS3: Rp 5.000/jam
+- PS4: Rp 8.000/jam
+- PS5: Rp 12.000/jam
+
+**PlayStation:** 7 units (PS3, PS4, PS5 dengan berbagai lokasi dan stik)
 
 ## 🤝 Contributing
 

@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{{ config('app.name', 'RENTAL PEES') }}</title>
+        <title>{{ config('app.name', 'LOS SEKOLITOS') }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
         <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">

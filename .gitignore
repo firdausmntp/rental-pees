@@ -84,3 +84,4 @@ composer.lock
 # Development Scripts
 /fix_constraint.php
 /drop_unique_kode.php
+/test_connection.php
