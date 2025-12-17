@@ -44,6 +44,26 @@ new #[Layout('layouts.auth'), Title('Login')] class extends Component
 
         <x-auth-session-status class="alert alert-info" :status="session('status')" />
 
+        @if(config('app.demo_mode'))
+            <div class="rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 p-6 space-y-3">
+                <div class="flex items-start gap-3">
+                    <i class="bx bx-info-circle text-amber-600 dark:text-amber-400 text-xl flex-shrink-0 mt-1"></i>
+                    <div class="space-y-3 flex-1">
+                        <h3 class="font-bold text-amber-900 dark:text-amber-100">Mode Demo Aktif</h3>
+                        <div class="space-y-2 text-sm text-amber-800 dark:text-amber-200">
+                            <p><strong>Email:</strong> <code class="bg-amber-200 dark:bg-amber-800 px-2 py-1 rounded text-xs font-mono">owner@rental.test</code></p>
+                            <p><strong>Password:</strong> <code class="bg-amber-200 dark:bg-amber-800 px-2 py-1 rounded text-xs font-mono">password</code></p>
+                            <p class="mt-2 text-xs">Atau gunakan email lain dengan password sama untuk role berbeda:</p>
+                            <ul class="text-xs space-y-1 mt-2 ml-4">
+                                <li>• <code class="bg-amber-200 dark:bg-amber-800 px-2 py-1 rounded font-mono">karyawan@rental.test</code> - Karyawan</li>
+                                <li>• <code class="bg-amber-200 dark:bg-amber-800 px-2 py-1 rounded font-mono">member@rental.test</code> - Member</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Form Card -->
         <div class="space-y-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 shadow-xl">
             <form wire:submit="login" class="space-y-5">

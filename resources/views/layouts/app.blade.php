@@ -6,6 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ isset($title) ? $title . ' - ' . config('app.name', 'RENTAL PEES') : config('app.name', 'RENTAL PEES') }}</title>
+        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
@@ -30,6 +31,13 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
         @stack('styles')
+
+        @if (config('services.midtrans.enabled'))
+            {{-- Midtrans Snap --}}
+            <script type="text/javascript"
+                src="{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+                data-client-key="{{ config('services.midtrans.client_key') }}"></script>
+        @endif
     </head>
     <body class="font-sans antialiased bg-gradient-to-br from-base-200 via-base-100 to-base-200 text-base-content">
         @php
@@ -64,6 +72,12 @@
                         'icon' => 'bx bxs-coupon',
                     ],
                     [
+                        'label' => 'Pembayaran',
+                        'route' => route('owner.payments'),
+                        'active' => request()->routeIs('owner.payments'),
+                        'icon' => 'bx bx-credit-card-front',
+                    ],
+                    [
                         'label' => 'Laporan',
                         'route' => route('owner.laporan'),
                         'active' => request()->routeIs('owner.laporan'),
@@ -74,6 +88,12 @@
                         'route' => route('owner.voucher.redeem'),
                         'active' => request()->routeIs('owner.voucher.redeem'),
                         'icon' => 'bx bx-qr-scan',
+                    ],
+                    [
+                        'label' => 'Kompromi',
+                        'route' => route('owner.kompromi'),
+                        'active' => request()->routeIs('owner.kompromi'),
+                        'icon' => 'bx bx-pause-circle',
                     ],
                 ];
             }
@@ -103,6 +123,12 @@
                         'route' => route('karyawan.voucher.redeem'),
                         'active' => request()->routeIs('karyawan.voucher.redeem'),
                         'icon' => 'bx bx-qr-scan',
+                    ],
+                    [
+                        'label' => 'Kompromi',
+                        'route' => route('karyawan.kompromi'),
+                        'active' => request()->routeIs('karyawan.kompromi'),
+                        'icon' => 'bx bx-pause-circle',
                     ],
                 ];
             }
@@ -311,7 +337,7 @@
                         <p>&copy; {{ now()->year }} {{ config('app.name', 'RENTAL PEES') }}. Semua hak dilindungi.</p>
                         <div class="flex items-center gap-4">
                             <span class="text-base-content/50">Support</span>
-                            <a href="mailto:rental@example.com" class="link link-hover">rental@example.com</a>
+                            <a href="mailto:firdaussatut@gmail.com" class="link link-hover">firdaussatut@gmail.com</a>
                         </div>
                     </div>
                 </footer>

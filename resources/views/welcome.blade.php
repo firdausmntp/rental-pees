@@ -1,5 +1,20 @@
 @php
     $title = 'Landing Page';
+    $tarifPrices = $tarifPrices ?? [];
+    $pricePs3 = $tarifPrices['PS3'] ?? null;
+    $pricePs4 = $tarifPrices['PS4'] ?? null;
+    $pricePs5 = $tarifPrices['PS5'] ?? null;
+    $formatPrice = function (?float $price, bool $short = false) {
+        if ($price === null) {
+            return $short ? '-' : 'Rp -';
+        }
+
+        if ($short) {
+            return rtrim(rtrim(number_format($price / 1000, 1, '.', ''), '0'), '.') . 'K';
+        }
+
+        return 'Rp ' . number_format($price, 0, ',', '.');
+    };
 @endphp
 
 @extends('layouts.guest')
@@ -70,7 +85,7 @@
                                 4K HDR, DualSense haptic, loading super-cepat!
                             </p>
                             <div class="mt-4 flex items-end gap-2">
-                                <span class="text-5xl font-extrabold text-sky-600">12K</span>
+                                <span class="text-5xl font-extrabold text-sky-600">{{ $formatPrice($pricePs5, true) }}</span>
                                 <span class="pb-2 text-sm font-medium text-slate-500">per jam</span>
                             </div>
                         </div>
@@ -98,7 +113,7 @@
                                 Game lengkap, performa stabil, turnamen ready!
                             </p>
                             <div class="mt-4 flex items-end gap-2">
-                                <span class="text-5xl font-extrabold text-blue-600">8K</span>
+                                <span class="text-5xl font-extrabold text-blue-600">{{ $formatPrice($pricePs4, true) }}</span>
                                 <span class="pb-2 text-sm font-medium text-slate-500">per jam</span>
                             </div>
                         </div>
@@ -449,7 +464,7 @@
                             Nostalgia ke era klasik, party game & arcade legend!
                         </p>
                         <div class="mt-6 flex items-end gap-2">
-                            <span class="text-5xl font-extrabold text-slate-800 dark:text-slate-100">4K</span>
+                            <span class="text-5xl font-extrabold text-slate-800 dark:text-slate-100">{{ $formatPrice($pricePs3) }}</span>
                             <span class="pb-2 text-sm font-medium text-slate-500 dark:text-slate-400">per jam</span>
                         </div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-700 dark:text-slate-300">
@@ -463,7 +478,7 @@
                             </li>
                             <li class="flex items-start gap-2">
                                 <i class="bx bxs-check-circle text-lg text-emerald-500"></i>
-                                <span>Denda 2K/jam jika telat</span>
+                                <span>Tanpa denda keterlambatan</span>
                             </li>
                         </ul>
                         <a href="{{ route('login') }}" class="btn btn-outline btn-primary mt-8 w-full">Sewa PS3</a>
@@ -491,7 +506,7 @@
                             Library lengkap, grafis tajam, event mingguan!
                         </p>
                         <div class="mt-6 flex items-end gap-2">
-                            <span class="text-5xl font-extrabold text-white">8K</span>
+                            <span class="text-5xl font-extrabold text-white">{{ $formatPrice($pricePs4) }}</span>
                             <span class="pb-2 text-sm font-medium text-white/70">per jam</span>
                         </div>
                         <ul class="mt-6 space-y-3 text-sm text-white">
@@ -505,7 +520,7 @@
                             </li>
                             <li class="flex items-start gap-2">
                                 <i class="bx bxs-check-circle text-lg text-cyan-200"></i>
-                                <span>Denda 3K/jam jika telat</span>
+                                <span>Tanpa denda keterlambatan</span>
                             </li>
                         </ul>
                         <a href="{{ route('login') }}"
@@ -534,7 +549,7 @@
                             4K HDR, DualSense haptic, loading super-cepat!
                         </p>
                         <div class="mt-6 flex items-end gap-2">
-                            <span class="text-5xl font-extrabold text-slate-800 dark:text-slate-100">12K</span>
+                            <span class="text-5xl font-extrabold text-slate-800 dark:text-slate-100">{{ $formatPrice($pricePs5) }}</span>
                             <span class="pb-2 text-sm font-medium text-slate-500 dark:text-slate-400">per jam</span>
                         </div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-700 dark:text-slate-300">
@@ -548,7 +563,7 @@
                             </li>
                             <li class="flex items-start gap-2">
                                 <i class="bx bxs-check-circle text-lg text-sky-500"></i>
-                                <span>Denda 5K/jam jika telat</span>
+                                <span>Tanpa denda keterlambatan</span>
                             </li>
                         </ul>
                         <a href="{{ route('login') }}" class="btn btn-outline btn-primary mt-8 w-full">Sewa PS5</a>

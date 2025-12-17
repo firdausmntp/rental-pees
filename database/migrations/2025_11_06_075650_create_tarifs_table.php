@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->enum('tipe_ps', ['PS3', 'PS4', 'PS5'])->unique();
             $table->decimal('harga_per_jam', 10, 2);
-            $table->decimal('denda_per_jam', 10, 2);
             $table->timestamps();
         });
     }

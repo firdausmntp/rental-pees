@@ -83,9 +83,11 @@ class Dashboard extends Component
             ->where('status', 'selesai')
             ->sum('total_biaya');
         
-        // Tambahkan pemasukan dari voucher yang dibeli hari ini
+        // Tambahkan pemasukan dari voucher yang dibeli hari ini (EXCLUDE kompromi karena kompensasi)
         $todayVoucherIncome = Voucher::whereDate('tanggal_beli', $today)
             ->where('status_pembayaran', 'paid')
+            ->whereNotNull('member_id')
+            ->where('metode_pembayaran', '!=', 'kompromi')
             ->sum('total_harga');
         
         $todayIncome += $todayVoucherIncome;
@@ -96,9 +98,11 @@ class Dashboard extends Component
             ->where('status', 'selesai')
             ->sum('total_biaya');
         
-        // Tambahkan pemasukan dari voucher yang dibeli bulan ini
+        // Tambahkan pemasukan dari voucher yang dibeli bulan ini (EXCLUDE kompromi karena kompensasi)
         $monthVoucherIncome = Voucher::whereDate('tanggal_beli', '>=', $thisMonth)
             ->where('status_pembayaran', 'paid')
+            ->whereNotNull('member_id')
+            ->where('metode_pembayaran', '!=', 'kompromi')
             ->sum('total_harga');
         
         $monthIncome += $monthVoucherIncome;

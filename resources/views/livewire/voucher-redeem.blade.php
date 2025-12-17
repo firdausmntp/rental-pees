@@ -100,8 +100,16 @@
                                     <i class='bx bx-user text-primary text-2xl'></i>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="text-sm text-base-content/60">Nama Member</p>
-                                    <p class="font-bold text-lg">{{ $voucher->member->name }}</p>
+                                    <p class="text-sm text-base-content/60">{{ $voucher->member ? 'Nama Member' : 'Nama Pembeli' }}</p>
+                                    <p class="font-bold text-lg">
+                                        {{ $voucher->member->name ?? $voucher->nama_pembeli ?? 'Tanpa nama' }}
+                                    </p>
+                                    @if(!$voucher->member)
+                                        <span class="badge badge-ghost badge-sm gap-1 mt-1">
+                                            <i class='bx bx-user-voice'></i>
+                                            Non-member
+                                        </span>
+                                    @endif
                                 </div>
                                 <div>
                                     @if($voucher->status_pembayaran === 'paid')
@@ -129,7 +137,18 @@
                                 </div>
                                 <div>
                                     <p class="text-sm text-base-content/60">Durasi Bermain</p>
-                                    <p class="font-bold text-lg">{{ $voucher->durasi_jam }} Jam</p>
+                                    @if($voucher->metode_pembayaran === 'kompromi' && $voucher->durasi_menit)
+                                        <p class="font-bold text-lg">{{ $voucher->durasi_menit }} Menit</p>
+                                        <p class="text-xs text-base-content/50">(≈ {{ $voucher->durasi_jam }} jam)</p>
+                                    @else
+                                        <p class="font-bold text-lg">{{ $voucher->durasi_jam }} Jam</p>
+                                    @endif
+                                    @if($voucher->metode_pembayaran === 'kompromi')
+                                        <span class="badge badge-info badge-sm gap-1 mt-2">
+                                            <i class='bx bx-handshake'></i>
+                                            Kompromi
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         </div>

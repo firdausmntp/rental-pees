@@ -14,17 +14,24 @@
         </div>
     @endif
 
+    @if(session('info'))
+        <div class="alert alert-info mb-6 shadow-lg">
+            <i class='bx bx-info-circle text-2xl'></i>
+            <span>{{ session('info') }}</span>
+        </div>
+    @endif
+
     <!-- Hero Header -->
-    <div class="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-accent to-primary/80 p-8 shadow-xl">
+    <div class="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-accent to-primary/80 p-6 md:p-8 shadow-xl">
         <div class="absolute inset-0 bg-black/10"></div>
         <div class="relative z-10">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
-                        <i class='bx bxs-dashboard text-5xl drop-shadow-lg'></i>
+                    <h1 class="text-2xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
+                        <i class='bx bxs-dashboard text-4xl md:text-5xl drop-shadow-lg'></i>
                         Dashboard Member
                     </h1>
-                    <p class="text-white/95 text-lg">Selamat datang kembali, <span class="font-semibold">{{ auth()->user()->name }}</span>!</p>
+                    <p class="text-white/95 text-base md:text-lg">Selamat datang kembali, <span class="font-semibold">{{ auth()->user()->name }}</span>!</p>
                 </div>
             </div>
         </div>
@@ -87,141 +94,211 @@
             </div>
 
             <!-- Filter Tabs -->
-            <div class="mb-6">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button wire:click="$set('filterStatus', 'all')" 
-                        class="btn btn-lg justify-start gap-3 transition-all shadow-md h-auto py-4
-                        {{ $filterStatus === 'all' ? 'btn-primary' : 'btn-outline btn-primary hover:btn-primary' }}">
-                        <i class='bx bx-list-ul text-3xl'></i>
-                        <div class="text-left flex-1">
-                            <div class="font-bold text-base">Semua</div>
-                            <div class="text-xs opacity-70 mt-1">Voucher Aktif</div>
-                        </div>
-                    </button>
-                    
-                    <button wire:click="$set('filterStatus', 'aktif')" 
-                        class="btn btn-lg justify-start gap-3 transition-all shadow-md h-auto py-4
-                        {{ $filterStatus === 'aktif' ? 'btn-success' : 'btn-outline btn-success hover:btn-success' }}">
-                        <i class='bx bx-check-circle text-3xl'></i>
-                        <div class="text-left flex-1">
-                            <div class="font-bold text-base">Aktif</div>
-                            <div class="text-xs opacity-70 mt-1">Siap Pakai</div>
-                        </div>
-                    </button>
-                    
-                    <button wire:click="$set('filterStatus', 'pending')" 
-                        class="btn btn-lg justify-start gap-3 transition-all shadow-md h-auto py-4
-                        {{ $filterStatus === 'pending' ? 'btn-warning' : 'btn-outline btn-warning hover:btn-warning' }}">
-                        <i class='bx bx-time text-3xl'></i>
-                        <div class="text-left flex-1">
-                            <div class="font-bold text-base">Pending</div>
-                            <div class="text-xs opacity-70 mt-1">Menunggu</div>
-                        </div>
-                    </button>
-                    
-                    <button wire:click="$set('filterStatus', 'terpakai')" 
-                        class="btn btn-lg justify-start gap-3 transition-all shadow-md h-auto py-4
-                        {{ $filterStatus === 'terpakai' ? 'btn-neutral' : 'btn-outline hover:btn-neutral' }}">
-                        <i class='bx bx-check text-3xl'></i>
-                        <div class="text-left flex-1">
-                            <div class="font-bold text-base">Terpakai</div>
-                            <div class="text-xs opacity-70 mt-1">Riwayat</div>
-                        </div>
-                    </button>
-                </div>
+            <div class="flex flex-wrap gap-2 mb-6 justify-center md:justify-start">
+                <button wire:click="$set('filterStatus', 'all')" 
+                    class="btn btn-sm md:btn-md rounded-full px-6 {{ $filterStatus === 'all' ? 'btn-primary text-black dark:text-white' : 'btn-ghost bg-base-200' }}">
+                    Semua
+                </button>
+                <button wire:click="$set('filterStatus', 'aktif')" 
+                    class="btn btn-sm md:btn-md rounded-full px-6 {{ $filterStatus === 'aktif' ? 'btn-success text-black dark:text-white' : 'btn-ghost bg-base-200' }}">
+                    Aktif
+                </button>
+                <button wire:click="$set('filterStatus', 'pending')" 
+                    class="btn btn-sm md:btn-md rounded-full px-6 {{ $filterStatus === 'pending' ? 'btn-warning text-black dark:text-white' : 'btn-ghost bg-base-200' }}">
+                    Pending
+                </button>
+                <button wire:click="$set('filterStatus', 'terpakai')" 
+                    class="btn btn-sm md:btn-md rounded-full px-6 {{ $filterStatus === 'terpakai' ? 'btn-success text-black dark:text-white' : 'btn-ghost bg-base-200' }}">
+                    Riwayat
+                </button>
             </div>
 
-            <!-- Vouchers Grid -->
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Voucher List -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse($vouchers as $voucher)
-                    <div class="card bg-base-100 border-2 hover:shadow-lg transition-all
-                        @if($voucher->status_pembayaran === 'paid' && $voucher->status === 'aktif') border-success hover:border-success/70
-                        @elseif($voucher->status_pembayaran === 'pending') border-warning hover:border-warning/70
-                        @else border-base-300 hover:border-base-content/20 @endif">
-                        <div class="card-body p-5">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="badge badge-lg font-semibold
-                                    @if($voucher->status_pembayaran === 'paid') badge-success 
-                                    @elseif($voucher->status_pembayaran === 'pending') badge-warning 
-                                    @else badge-error @endif">
-                                    {{ strtoupper($voucher->status_pembayaran) }}
+                    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 border border-base-200 group overflow-hidden">
+                        <!-- Status Badge -->
+                        <div class="absolute top-0 right-0 p-0 z-10">
+                            @if($voucher->status_pembayaran === 'pending')
+                                <div class="bg-warning text-warning-content px-4 py-1 rounded-bl-xl font-bold text-sm shadow-sm">
+                                    <i class='bx bx-time-five'></i> Menunggu Pembayaran
                                 </div>
-                                <div class="badge badge-lg badge-outline border-2 font-medium">{{ strtoupper($voucher->status) }}</div>
-                            </div>
-                            
-                            <div class="bg-base-200/70 rounded-xl p-4 mb-4">
-                                <p class="text-xs text-base-content/60 mb-1">Kode Voucher</p>
-                                @if($voucher->status_pembayaran === 'paid')
-                                    <p class="font-mono text-xl font-bold text-base-content">{{ $voucher->kode_voucher }}</p>
-                                @else
-                                    <p class="text-sm text-warning font-medium">
-                                        <i class='bx bx-time-five'></i>
-                                        Kode akan muncul setelah pembayaran dikonfirmasi
-                                    </p>
-                                @endif
-                            </div>
+                            @elseif($voucher->status === 'aktif')
+                                <div class="bg-success text-success-content px-4 py-1 rounded-bl-xl font-bold text-sm shadow-sm">
+                                    <i class='bx bx-check-circle'></i> Aktif
+                                </div>
+                            @else
+                                <div class="bg-base-300 text-base-content px-4 py-1 rounded-bl-xl font-bold text-sm shadow-sm">
+                                    {{ ucfirst($voucher->status) }}
+                                </div>
+                            @endif
+                        </div>
 
-                            <div class="space-y-3 text-sm">
-                                <div class="flex items-center gap-2 text-base-content/80">
-                                    <i class='bx bx-time text-primary text-lg'></i>
-                                    <span class="font-medium">{{ $voucher->durasi_jam }} jam</span>
+                        <div class="card-body p-0">
+                            <!-- Card Header -->
+                            <div class="p-6 {{ $voucher->status === 'aktif' ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' : 'bg-base-200' }}">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <h3 class="font-bold text-lg opacity-90">PlayStation {{ $voucher->tarif->tipe_ps ?? 'PS' }}</h3>
+                                        <div class="text-3xl font-bold mt-1">
+                                            @if($voucher->metode_pembayaran === 'kompromi' && $voucher->durasi_menit)
+                                                {{ $voucher->durasi_menit }} Menit
+                                                <span class="text-sm">(≈ {{ $voucher->durasi_jam }} jam)</span>
+                                            @else
+                                                {{ $voucher->durasi_jam }} Jam
+                                            @endif
+                                        </div>
+                                        @if($voucher->metode_pembayaran === 'kompromi')
+                                            <span class="badge badge-info badge-sm gap-1 mt-2">
+                                                <i class='bx bx-handshake'></i>
+                                                Kompromi
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                                        <i class='bx bx-joystick text-2xl'></i>
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-2 text-base-content/80">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" class="text-primary">
-                                        <path d="M2.41 15.55c-.75.5-.5 1.45 1.1 1.9 1.65.55 3.45.7 5.2.4.1 0 .2-.05.25-.05v-1.7l-1.7.55c-.65.2-1.3.25-1.95.1-.5-.15-.4-.45.2-.7l3.45-1.2V13l-4.8 1.65c-.6.2-1.2.5-1.75.9M14 8.05v4.85c2.05 1 3.65 0 3.65-2.6s-.95-3.85-3.7-4.8C12.5 5 11 4.55 9.5 4.25v14.44l3.5 1.05V7.6c0-.55 0-.95.4-.8.55.15.6.7.6 1.25m6.5 6.35c-1.45-.5-3-.7-4.5-.55-.8.05-1.55.25-2.25.5l-.15.05v1.95l3.25-1.2c.65-.2 1.3-.25 1.95-.1.5.15.4.45-.2.7l-5 1.85v1.9l6.9-2.55c.5-.2.95-.45 1.35-.85.35-.5.2-1.2-1.35-1.7"></path>
-                                    </svg>
-                                    <span class="font-medium">{{ $voucher->tarif->tipe_ps }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-base-content/80">
-                                    <i class='bx bx-money text-success text-lg'></i>
-                                    <span class="font-semibold text-success">Rp {{ number_format($voucher->total_harga, 0, ',', '.') }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-xs text-base-content/60">
+                                <div class="mt-4 flex items-center gap-2 text-sm opacity-80">
                                     <i class='bx bx-calendar'></i>
-                                    <span>{{ $voucher->tanggal_beli->translatedFormat('d M Y, H:i') }}</span>
+                                    {{ $voucher->created_at->format('d M Y H:i') }}
                                 </div>
                             </div>
 
-                            @if($voucher->status_pembayaran === 'pending' && $voucher->metode_pembayaran === 'cash')
-                                <div class="alert alert-warning mt-4 py-2 shadow-sm">
-                                    <i class='bx bx-time-five text-lg'></i>
-                                    <span class="text-xs">Menunggu konfirmasi kasir</span>
-                                </div>
-                            @endif
+                            <!-- Card Content -->
+                            <div class="p-6 space-y-4">
+                                <!-- Kode Voucher Section -->
+                                @if($voucher->status === 'aktif' && $voucher->kode_voucher)
+                                    <div class="bg-base-200 p-4 rounded-xl text-center border-2 border-dashed border-primary/30 group-hover:border-primary transition-colors">
+                                        <p class="text-xs text-base-content/60 mb-1">KODE VOUCHER</p>
+                                        <p class="text-2xl font-mono font-bold text-primary tracking-wider select-all">{{ $voucher->kode_voucher }}</p>
+                                    </div>
+                                @elseif($voucher->status_pembayaran === 'pending')
+                                    <div class="bg-warning/10 p-4 rounded-xl border border-warning/20">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-sm text-base-content/70">Total Tagihan</span>
+                                            <span class="font-bold text-lg">Rp {{ number_format($voucher->qris_nominal ?? $voucher->total_harga, 0, ',', '.') }}</span>
+                                        </div>
+                                        
+                                        @if($voucher->metode_pembayaran === 'qris')
+                                            <div class="text-xs text-base-content/60 mb-3">
+                                                Transfer sesuai nominal unik (termasuk 3 digit terakhir) untuk verifikasi otomatis.
+                                            </div>
+                                            
+                                            <div class="flex flex-col gap-2">
+                                                <button wire:click="showQris({{ $voucher->id }})" class="btn btn-info btn-sm w-full gap-2 shadow-sm text-black dark:text-white">
+                                                    <i class='bx bx-qr'></i> Lihat QRIS
+                                                </button>
 
-                            @if($voucher->status_pembayaran === 'pending' && $voucher->metode_pembayaran === 'qris')
-                                @if(!$voucher->qris_image)
-                                    <button wire:click="openUploadModal({{ $voucher->id }})" class="btn btn-warning btn-sm md:btn-md w-full mt-4 gap-2 shadow-lg">
-                                        <i class='bx bx-upload text-lg'></i>
-                                        <span class="font-semibold">Upload Bukti Pembayaran</span>
-                                    </button>
-                                @else
-                                    <div class="alert alert-info mt-4 py-2 shadow-sm">
-                                        <i class='bx bx-info-circle text-lg'></i>
-                                        <span class="text-xs">Menunggu approval admin</span>
+                                                @if(!$voucher->qris_image)
+                                                    <button wire:click="openUploadModal({{ $voucher->id }})" class="btn btn-warning btn-sm w-full gap-2 shadow-sm">
+                                                        <i class='bx bx-upload'></i> Upload Bukti
+                                                    </button>
+                                                @else
+                                                    <div class="flex flex-col gap-2">
+                                                        <div class="alert alert-success py-2 px-3 text-xs shadow-sm flex justify-between items-center">
+                                                            <div class="flex items-center gap-2">
+                                                                <i class='bx bx-check-circle'></i> Bukti terupload
+                                                            </div>
+                                                            <!-- Button to open modal -->
+                                                            <button onclick="document.getElementById('preview_modal_{{ $voucher->id }}').showModal()" class="btn btn-xs btn-ghost btn-circle" type="button">
+                                                                <i class='bx bx-show text-lg'></i>
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        <!-- Modal Preview (Native HTML dialog) -->
+                                                        <dialog id="preview_modal_{{ $voucher->id }}" class="modal">
+                                                            <div class="modal-box p-0 overflow-hidden max-w-sm">
+                                                                <div class="bg-base-200 p-4 flex justify-between items-center">
+                                                                    <h3 class="font-bold text-lg">Bukti Pembayaran</h3>
+                                                                    <form method="dialog">
+                                                                        <button class="btn btn-sm btn-circle btn-ghost">✕</button>
+                                                                    </form>
+                                                                </div>
+                                                                <div class="p-4 bg-base-100 flex justify-center">
+                                                                    <img src="{{ asset('storage/' . $voucher->qris_image) }}" class="max-h-[60vh] rounded-lg shadow-md" alt="Bukti Transfer">
+                                                                </div>
+                                                                <form method="dialog" class="modal-backdrop">
+                                                                    <button>close</button>
+                                                                </form>
+                                                            </div>
+                                                        </dialog>
+    
+                                                        <button wire:click="openUploadModal({{ $voucher->id }})" class="btn btn-outline btn-warning btn-xs w-full gap-1">
+                                                            <i class='bx bx-edit'></i> Ganti Bukti
+                                                        </button>
+                                                    </div>
+                                                @endif
+
+                                                <button wire:click="confirmCancel({{ $voucher->id }})" 
+                                                    class="btn btn-ghost btn-xs w-full gap-1 text-error hover:bg-error/10">
+                                                    <i class='bx bx-x-circle'></i> Batalkan
+                                                </button>
+                                            </div>
+                                        @elseif($voucher->metode_pembayaran === 'pakasir')
+                                            <div class="text-xs text-base-content/60 mb-3">
+                                                Pembayaran otomatis melalui Pakasir. Klik tombol di bawah untuk membuka halaman pembayaran.
+                                            </div>
+                                            <div class="flex flex-col gap-2">
+                                                <button wire:click="payPakasir({{ $voucher->id }})" class="btn btn-primary btn-sm w-full gap-2 shadow-sm">
+                                                    <i class='bx bx-credit-card'></i> Bayar via Pakasir
+                                                </button>
+                                                <button wire:click="checkPakasirStatus({{ $voucher->id }})" class="btn btn-ghost btn-xs w-full gap-1">
+                                                    <i class='bx bx-refresh'></i> Cek Status Pembayaran
+                                                </button>
+                                                <button wire:click="confirmCancel({{ $voucher->id }})" 
+                                                    class="btn btn-ghost btn-xs w-full gap-1 text-error hover:bg-error/10">
+                                                    <i class='bx bx-x-circle'></i> Batalkan
+                                                </button>
+                                            </div>
+                                        @elseif($voucher->metode_pembayaran === 'midtrans')
+                                            <div class="text-xs text-base-content/60 mb-3">
+                                                Pembayaran otomatis melalui Midtrans. Klik tombol di bawah untuk membuka halaman pembayaran.
+                                            </div>
+                                            <div class="flex flex-col gap-2">
+                                                <button wire:click="payMidtrans({{ $voucher->id }})" class="btn btn-primary btn-sm w-full gap-2 shadow-sm">
+                                                    <i class='bx bx-credit-card'></i> Bayar via Midtrans
+                                                </button>
+                                                <button wire:click="checkMidtransStatus({{ $voucher->id }})" class="btn btn-ghost btn-xs w-full gap-1">
+                                                    <i class='bx bx-refresh'></i> Cek Status Pembayaran
+                                                </button>
+                                                <button wire:click="confirmCancel({{ $voucher->id }})" 
+                                                    class="btn btn-ghost btn-xs w-full gap-1 text-error hover:bg-error/10">
+                                                    <i class='bx bx-x-circle'></i> Batalkan
+                                                </button>
+                                            </div>
+                                        @else
+                                            <div class="alert alert-info py-2 px-3 text-xs">
+                                                <i class='bx bx-store'></i> Bayar di kasir
+                                            </div>
+                                        @endif
                                     </div>
                                 @endif
-                            @endif
 
-                            @if($voucher->status_pembayaran === 'paid' && $voucher->status === 'aktif')
-                                <div class="alert alert-success mt-4">
-                                    <i class='bx bx-info-circle text-lg'></i>
-                                    <div class="text-sm">
-                                        <p class="font-semibold">Voucher Aktif - Siap Digunakan!</p>
-                                        <p class="text-xs mt-1">Tunjukkan kode voucher ini ke kasir/karyawan untuk menggunakan voucher</p>
+                                <!-- Details -->
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between pb-2 border-b border-base-200">
+                                        <span class="text-base-content/60">Harga Paket</span>
+                                        <span class="font-semibold">Rp {{ number_format($voucher->harga_per_jam, 0, ',', '.') }}/jam</span>
+                                    </div>
+                                    <div class="flex justify-between pb-2 border-b border-base-200">
+                                        <span class="text-base-content/60">Metode Bayar</span>
+                                        <span class="badge badge-ghost font-semibold uppercase text-xs">{{ $voucher->metode_pembayaran }}</span>
                                     </div>
                                 </div>
-                            @endif
+                            </div>
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-full text-center py-16">
-                        <i class='bx bx-sad text-8xl text-base-content/20'></i>
-                        <p class="text-xl text-base-content/60 mt-4 mb-2">Belum ada voucher</p>
-                        <p class="text-sm text-base-content/50 mb-6">Beli voucher sekarang dan nikmati bermain PlayStation!</p>
-                        <a href="{{ route('member.beli') }}" class="btn btn-primary btn-md gap-2 shadow-lg px-8">
+                    <div class="col-span-full text-center py-16 bg-base-100 rounded-2xl border-2 border-dashed border-base-300">
+                        <div class="w-24 h-24 bg-base-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class='bx bx-joystick text-5xl text-base-content/30'></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Belum Ada Voucher</h3>
+                        <p class="text-base-content/60 mb-6 max-w-md mx-auto">Kamu belum memiliki riwayat pembelian voucher. Yuk beli voucher sekarang dan mulai bermain!</p>
+                        <a href="{{ route('member.beli') }}" class="btn btn-primary btn-lg gap-2 shadow-lg hover:scale-105 transition-transform">
                             <i class='bx bx-plus text-xl'></i>
-                            <span class="font-semibold">Beli Voucher Sekarang</span>
+                            Beli Voucher Baru
                         </a>
                     </div>
                 @endforelse
@@ -275,17 +352,88 @@
                     </div>
 
                     <div class="modal-action">
-                        <button type="button" wire:click="cancelUpload" class="btn btn-ghost">
+                        <button type="button" wire:click="closeUploadModal" class="btn btn-ghost">
                             Batal
                         </button>
-                        <button type="submit" class="btn btn-warning" :disabled="!buktiPembayaran">
+                        <button type="submit" class="btn btn-warning" wire:loading.attr="disabled">
                             <i class='bx bx-upload'></i>
                             Upload
                         </button>
                     </div>
                 </form>
             </div>
-            <label class="modal-backdrop" wire:click="cancelUpload"></label>
+            <label class="modal-backdrop" wire:click="closeUploadModal"></label>
+        </div>
+    @endif
+
+    <!-- QRIS Modal -->
+    @if($showQrisModal)
+        <div class="modal modal-open">
+            <div class="modal-box max-w-2xl">
+                <h3 class="font-bold text-2xl mb-4 flex items-center gap-2">
+                    <i class='bx bx-qr text-info text-3xl'></i>
+                    Pembayaran QRIS
+                </h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="bg-white p-4 rounded-xl border border-base-200 shadow-lg">
+                            @if($qrisData)
+                                {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(200)->generate($qrisData) !!}
+                            @else
+                                <div class="w-48 h-48 flex items-center justify-center bg-base-200 rounded-lg">
+                                    <span class="loading loading-spinner loading-lg"></span>
+                                </div>
+                            @endif
+                        </div>
+                        <p class="text-xs text-base-content/60 text-center">
+                            Scan QR di atas lalu transfer sesuai nominal unik agar kasir mudah memverifikasi pembayaran manual.
+                        </p>
+                    </div>
+                    <div class="space-y-4 text-sm">
+                        <div class="bg-base-200 rounded-xl p-4">
+                            <p class="text-xs text-base-content/70">Nominal Unik</p>
+                            <p class="text-3xl font-bold text-warning mt-1">
+                                @if($previewQrisNominal)
+                                    Rp {{ number_format($previewQrisNominal, 0, ',', '.') }}
+                                @else
+                                    -
+                                @endif
+                            </p>
+                            <p class="text-xs text-base-content/60 mt-2">Nominal sudah termasuk kode unik. Mohon transfer sesuai angka yang tertera.</p>
+                        </div>
+                        <div class="alert alert-info text-xs">
+                            <i class='bx bx-info-circle'></i>
+                            <span>Setelah transfer, silakan upload bukti pembayaran di dashboard.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <button type="button" class="btn btn-primary" wire:click="closeQrisModal">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Cancel Confirmation Modal -->
+    @if($cancelVoucherId)
+        <div class="modal modal-open">
+            <div class="modal-box">
+                <h3 class="font-bold text-lg text-error flex items-center gap-2">
+                    <i class='bx bx-error-circle text-2xl'></i>
+                    Konfirmasi Pembatalan
+                </h3>
+                <p class="py-4">Apakah Anda yakin ingin membatalkan transaksi ini? Tindakan ini tidak dapat dibatalkan.</p>
+                <div class="modal-action">
+                    <button type="button" class="btn btn-ghost" wire:click="closeCancelModal">Tidak, Kembali</button>
+                    <button type="button" class="btn btn-error" wire:click="cancelTransaction" wire:loading.attr="disabled">
+                        <span wire:loading.remove>Ya, Batalkan Transaksi</span>
+                        <span wire:loading>Memproses...</span>
+                    </button>
+                </div>
+            </div>
         </div>
     @endif
 </div>

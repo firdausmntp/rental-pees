@@ -17,24 +17,24 @@ class UserSeeder extends Seeder
         // Create Owner
         User::create([
             'name' => 'Owner',
-            'email' => 'owner@rental-ps.com',
-            'password' => Hash::make('owner123'),
+            'email' => 'owner@rental.test',
+            'password' => Hash::make('password'),
             'role' => 'owner',
         ]);
 
         // Create Karyawan
         User::create([
             'name' => 'Karyawan 1',
-            'email' => 'karyawan@rental-ps.com',
-            'password' => Hash::make('karyawan123'),
+            'email' => 'karyawan@rental.test',
+            'password' => Hash::make('password'),
             'role' => 'karyawan',
         ]);
 
         // Create Member
         User::create([
             'name' => 'Member',
-            'email' => 'member@rental-ps.com',
-            'password' => Hash::make('member123'),
+            'email' => 'member@rental.test',
+            'password' => Hash::make('password'),
             'role' => 'member',
         ]);
     }

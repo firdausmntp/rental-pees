@@ -260,4 +260,92 @@
             </div>
         </div>
     </div>
+
+    <!-- Tabel Kompromi Vouchers -->
+    @if(isset($kompromis) && $kompromis->count() > 0)
+        <div class="card bg-base-100 shadow-xl mt-6">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="card-title">
+                        <i class='bx bx-handshake text-info text-2xl'></i>
+                        Voucher Kompromi (Kompensasi)
+                    </h2>
+                    <span class="badge badge-info badge-lg">{{ $kompromis->total() }} Voucher</span>
+                </div>
+                <p class="text-sm text-base-content/60 mb-4">Voucher kompensasi dari stop transaksi - <strong>tidak dihitung ke omset</strong></p>
+
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                            <tr>
+                                <th>Kode Voucher</th>
+                                <th>Pembeli</th>
+                                <th>Durasi</th>
+                                <th>PlayStation</th>
+                                <th>Tanggal Dibuat</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($kompromis as $kompromi)
+                                <tr>
+                                    <td>
+                                        <div class="font-mono font-bold">{{ $kompromi->kode_voucher }}</div>
+                                        <span class="badge badge-info gap-1">
+                                            <i class='bx bx-handshake text-xs'></i>
+                                            KOMPROMI
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="font-semibold">{{ $kompromi->nama_pembeli ?? '-' }}</div>
+                                    </td>
+                                    <td>
+                                        @if($kompromi->durasi_menit)
+                                            <div class="font-semibold">{{ $kompromi->durasi_menit }} Menit</div>
+                                            <div class="text-xs text-base-content/50">(≈ {{ $kompromi->durasi_jam }} jam)</div>
+                                        @else
+                                            {{ $kompromi->durasi_jam }} Jam
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($kompromi->tarif)
+                                            <div class="font-semibold">{{ $kompromi->tarif->tipe_ps }}</div>
+                                            <div class="text-xs text-base-content/50">{{ $kompromi->tarif->jenis_tarif ?? 'Standard' }}</div>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="text-sm">
+                                        <div>{{ $kompromi->tanggal_beli->format('d/m/Y') }}</div>
+                                        <div class="text-xs text-gray-500">{{ $kompromi->tanggal_beli->format('H:i') }}</div>
+                                    </td>
+                                    <td>
+                                        @if($kompromi->status == 'aktif')
+                                            <span class="badge badge-success">Aktif</span>
+                                        @elseif($kompromi->status == 'terpakai')
+                                            <span class="badge badge-info">Terpakai</span>
+                                        @else
+                                            <span class="badge badge-error">Expired</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-8 text-base-content/60">
+                                        Tidak ada voucher kompromi pada periode ini
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4">
+                    {{ $kompromis->links() }}
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
+
+```

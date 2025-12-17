@@ -24,7 +24,6 @@ return new class extends Migration
             $table->decimal('tarif_per_jam', 10, 2);
             $table->decimal('diskon_persen', 5, 2)->default(0);
             $table->decimal('diskon_nominal', 10, 2)->default(0);
-            $table->decimal('denda', 10, 2)->default(0);
             $table->decimal('total_biaya', 10, 2);
             $table->enum('status', ['berlangsung', 'selesai', 'batal'])->default('berlangsung');
             $table->text('keterangan')->nullable();

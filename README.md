@@ -148,6 +148,29 @@ MAIL_FROM_NAME="Rental PS Management"
 
 > **Note**: Konfigurasi di atas menggunakan [Ethereal Email](https://ethereal.email/) untuk testing. Untuk production, gunakan SMTP provider seperti Gmail, SendGrid, atau Mailgun.
 
+### 5b. Konfigurasi Payment Gateway
+
+Gunakan blok berikut pada `.env` untuk mengatur gateway yang aktif:
+
+```env
+MIDTRANS_ENABLED=false
+MIDTRANS_MERCHANT_ID=
+MIDTRANS_CLIENT_KEY=
+MIDTRANS_SERVER_KEY=
+MIDTRANS_IS_PRODUCTION=false
+
+PAKASIR_ENABLED=true
+PAKASIR_PROJECT_SLUG=slug-proyek-pakasir
+PAKASIR_API_KEY=api-key-pakasir
+PAKASIR_BASE_URL=https://app.pakasir.com
+PAKASIR_REDIRECT_URL="https://domain-anda.com/member/dashboard"
+```
+
+- Set `MIDTRANS_ENABLED=false` saat Midtrans maintenance agar opsi otomatis tidak muncul.
+- Pastikan `PAKASIR_ENABLED=true` dan isi `PAKASIR_PROJECT_SLUG` + `PAKASIR_API_KEY` dari dashboard Pakasir.
+- `PAKASIR_REDIRECT_URL` bersifat opsional untuk mengarahkan user kembali setelah pembayaran selesai (default ke halaman sebelumnya bila kosong).
+- Daftarkan URL webhook Pakasir ke `https://domain-anda.com/pakasir/webhook` agar status pembayaran otomatis diperbarui.
+
 ### 6. Database Migration & Seeding
 
 ```bash

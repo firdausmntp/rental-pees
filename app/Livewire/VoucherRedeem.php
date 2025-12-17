@@ -97,20 +97,43 @@ class VoucherRedeem extends Component
         }
 
         // Hitung waktu dengan +5 menit toleransi
-        $durasiJam = $this->voucher->durasi_jam;
-        $durasiMenit = ($durasiJam * 60) + 5; // +5 menit toleransi setup
+        $durasiJam = (int) $this->voucher->durasi_jam;
+        
+        // Untuk kompromi voucher, gunakan durasi_menit yang actual
+        // Untuk voucher biasa, hitung dari durasi_jam + 5 menit toleransi
+        if ($this->voucher->metode_pembayaran === 'kompromi' && $this->voucher->durasi_menit) {
+            $durasiMenit = (int) $this->voucher->durasi_menit; // Gunakan durasi menit actual tanpa tambahan
+        } else {
+            $durasiMenit = ($durasiJam * 60) + 5; // +5 menit toleransi setup untuk voucher regular
+        }
 
-        // Cari atau buat data pelanggan untuk member ini
+        // Cari atau buat data pelanggan berdasarkan member atau nama pembeli non-member
         $member = $this->voucher->member;
-        $pelanggan = Pelanggan::firstOrCreate(
-            ['nomor_hp' => $member->email], // Gunakan email sebagai unique identifier
-            [
-                'nama' => $member->name,
-                'nomor_hp' => $member->email,
-                'alamat' => '-',
-                'is_member' => true,
-            ]
-        );
+
+        if ($member) {
+            $identifier = $member->email ?: 'member-' . $member->id;
+            $pelanggan = Pelanggan::firstOrCreate(
+                ['nomor_hp' => $identifier],
+                [
+                    'nama' => $member->name,
+                    'nomor_hp' => $identifier,
+                    'alamat' => '-',
+                    'is_member' => true,
+                ]
+            );
+        } else {
+            $guestName = $this->voucher->nama_pembeli ?: 'Pembeli voucher';
+            $guestIdentifier = 'VCH-' . ($this->voucher->kode_voucher ?? 'GUEST');
+            $pelanggan = Pelanggan::firstOrCreate(
+                ['nomor_hp' => $guestIdentifier],
+                [
+                    'nama' => $guestName,
+                    'nomor_hp' => $guestIdentifier,
+                    'alamat' => '-',
+                    'is_member' => false,
+                ]
+            );
+        }
 
         // Buat transaksi dengan snapshot harga dari voucher
         $transaksi = Transaksi::create([
@@ -140,8 +163,15 @@ class VoucherRedeem extends Component
         $ps->update(['status' => 'dipakai']);
 
         $waktuSelesai = now()->addMinutes($durasiMenit)->format('H:i');
+        
+        // Format pesan berdasarkan tipe voucher
+        if ($this->voucher->metode_pembayaran === 'kompromi' && $this->voucher->durasi_menit) {
+            $durasiText = $this->voucher->durasi_menit . ' menit';
+        } else {
+            $durasiText = $durasiJam . ' jam 5 menit';
+        }
 
-        session()->flash('message', 'Voucher berhasil diredeem! PlayStation ' . $ps->kode_ps . ' aktif hingga ' . $waktuSelesai . ' (' . $durasiJam . ' jam 5 menit).');
+        session()->flash('message', 'Voucher berhasil diredeem! PlayStation ' . $ps->kode_ps . ' aktif hingga ' . $waktuSelesai . ' (' . $durasiText . ').');
         
         $this->reset(['kode_voucher', 'voucher', 'playstation_id', 'showRedeemForm']);
     }

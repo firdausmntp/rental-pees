@@ -30,6 +30,11 @@ class VoucherManagement extends Component
     public $showImageModal = false;
     public $selectedImage = null;
 
+    // QRIS preview modal
+    public $showQrisModal = false;
+    public $qrisData = null;
+    public $previewQrisNominal = null;
+
     protected $rules = [
         'tarif_id' => 'required|exists:tarifs,id',
         'durasi_jam' => 'required|integer|min:1',
@@ -53,11 +58,14 @@ class VoucherManagement extends Component
     {
         $vouchers = Voucher::with(['member', 'tarif', 'transaksi'])
             ->when($this->search, function($query) {
-                $query->where('kode_voucher', 'like', '%' . $this->search . '%')
-                    ->orWhere('nama_pembeli', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('member', function($q) {
-                        $q->where('name', 'like', '%' . $this->search . '%');
-                    });
+                $search = $this->search;
+                $query->where(function($subQuery) use ($search) {
+                    $subQuery->where('kode_voucher', 'like', '%' . $search . '%')
+                        ->orWhere('nama_pembeli', 'like', '%' . $search . '%')
+                        ->orWhereHas('member', function($memberQuery) use ($search) {
+                            $memberQuery->where('name', 'like', '%' . $search . '%');
+                        });
+                });
             })
             ->when($this->statusFilter, function($query) {
                 if ($this->statusFilter === 'pending') {
@@ -69,6 +77,29 @@ class VoucherManagement extends Component
             ->latest()
             ->paginate(10);
 
+        $filterSummary = [
+            'total' => Voucher::count(),
+            'active' => Voucher::where('status', 'aktif')->count(),
+            'used' => Voucher::where('status', 'terpakai')->count(),
+            'expired' => Voucher::where('status', 'expired')->count(),
+            'pending' => Voucher::where('status_pembayaran', 'pending')->count(),
+            'todayRevenue' => (float) Voucher::where('metode_pembayaran', '!=', 'kompromi')
+                ->where(function($query) {
+                    // Voucher yang dibeli hari ini dan sudah dibayar
+                    $query->where(function($subQuery) {
+                        $subQuery->whereDate('tanggal_beli', now())
+                            ->where('status_pembayaran', 'paid')
+                            ->whereNotNull('member_id');
+                    })
+                    // ATAU voucher yang sudah dipakai (redeemed) hari ini
+                    ->orWhere(function($subQuery) {
+                        $subQuery->where('status', 'terpakai')
+                            ->whereDate('tanggal_pakai', now());
+                    });
+                })
+                ->sum('total_harga'),
+        ];
+
         $members = User::where('role', 'member')->get();
         $tarifs = Tarif::all();
 
@@ -76,7 +107,15 @@ class VoucherManagement extends Component
             'vouchers' => $vouchers,
             'members' => $members,
             'tarifs' => $tarifs,
+            'filterSummary' => $filterSummary,
         ])->layout('layouts.app');
+    }
+
+    public function resetFilters(): void
+    {
+        $this->search = '';
+        $this->statusFilter = '';
+        $this->resetPage();
     }
 
     public function openModal()
@@ -112,6 +151,9 @@ class VoucherManagement extends Component
         $hargaPerJam = $tarif->harga_per_jam;
         $totalHarga = $hargaPerJam * $this->durasi_jam;
 
+        $qrisNominal = null;
+        $paymentGateway = null;
+
         // Tentukan status berdasarkan metode pembayaran
         if ($this->metode_pembayaran === 'cash') {
             $statusPembayaran = 'paid';
@@ -119,6 +161,8 @@ class VoucherManagement extends Component
         } else {
             $statusPembayaran = 'pending';
             $statusVoucher = 'pending';
+            $qrisNominal = Voucher::generateUniqueQrisNominal($totalHarga);
+            $paymentGateway = 'manual_qris';
         }
 
         Voucher::create([
@@ -128,9 +172,13 @@ class VoucherManagement extends Component
             'durasi_jam' => $this->durasi_jam,
             'harga_per_jam' => $hargaPerJam,
             'total_harga' => $totalHarga,
+            'qris_nominal' => $qrisNominal,
+            'metode_pembayaran' => $this->metode_pembayaran,
             'status' => $statusVoucher,
             'status_pembayaran' => $statusPembayaran,
             'nama_pembeli' => $this->nama_pembeli ?: null, // Nama custom jika tanpa member
+            'payment_gateway' => $paymentGateway,
+            'payment_reference' => null,
             'tanggal_beli' => now(),
             'expired_at' => now()->addDays($this->expired_days),
             'qris_image' => null, // QRIS akan diupload oleh pembeli
@@ -139,7 +187,11 @@ class VoucherManagement extends Component
         if ($this->metode_pembayaran === 'cash') {
             session()->flash('message', 'Voucher berhasil dibuat! Kode: ' . $kodeVoucher . ' (LUNAS)');
         } else {
-            session()->flash('message', 'Voucher berhasil dibuat! Kode: ' . $kodeVoucher . ' (Menunggu pembayaran QRIS)');
+            session()->flash(
+                'message',
+                'Voucher QRIS dibuat! Kode: ' . $kodeVoucher . ' — mohon terima transfer sebesar Rp ' .
+                number_format($qrisNominal, 0, ',', '.') . ' dan unggahan bukti sebelum approve.'
+            );
         }
         
         $this->closeModal();
@@ -262,6 +314,62 @@ class VoucherManagement extends Component
     {
         $this->showImageModal = false;
         $this->selectedImage = null;
+    }
+
+    public function showQris($voucherId): void
+    {
+        $voucher = Voucher::find($voucherId);
+
+        if (! $voucher || $voucher->metode_pembayaran !== 'qris') {
+            return;
+        }
+
+        $this->previewQrisNominal = $voucher->qris_nominal ?? $voucher->total_harga;
+        $this->qrisData = $this->generateQrisString($this->previewQrisNominal);
+        $this->showQrisModal = true;
+    }
+
+    public function closeQrisModal(): void
+    {
+        $this->showQrisModal = false;
+        $this->qrisData = null;
+        $this->previewQrisNominal = null;
+    }
+
+    private function generateQrisString($amount): string
+    {
+        $baseQris = "00020101021126610014COM.GO-JEK.WWW01189360091430404966290210G0404966290303UMI51440014ID.CO.QRIS.WWW0215ID10243614510490303UMI5204549953033605802ID5919JSK STORE, SNDNG JY6009TANGERANG61051556062070703A01";
+
+        $step1 = str_replace('010211', '010212', $baseQris);
+        $parts = explode('5802ID', $step1);
+
+        $amountStr = (string) $amount;
+        $amountTag = '54' . str_pad(strlen($amountStr), 2, '0', STR_PAD_LEFT) . $amountStr;
+
+        $fixed = $parts[0] . $amountTag . '5802ID' . $parts[1] . '6304';
+        $crc = $this->crc16($fixed);
+
+        return $fixed . $crc;
+    }
+
+    private function crc16(string $payload): string
+    {
+        $crc = 0xFFFF;
+        $length = strlen($payload);
+
+        for ($index = 0; $index < $length; $index++) {
+            $crc ^= ord($payload[$index]) << 8;
+            for ($bit = 0; $bit < 8; $bit++) {
+                if ($crc & 0x8000) {
+                    $crc = ($crc << 1) ^ 0x1021;
+                } else {
+                    $crc <<= 1;
+                }
+            }
+        }
+
+        $hex = strtoupper(dechex($crc & 0xFFFF));
+        return str_pad($hex, 4, '0', STR_PAD_LEFT);
     }
 }
 

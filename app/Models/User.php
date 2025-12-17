@@ -56,6 +56,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Treat owner as admin for legacy checks.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->isOwner();
+    }
+
+    /**
      * Check if user is karyawan
      */
     public function isKaryawan(): bool

@@ -35,4 +35,23 @@ return [
         ],
     ],
 
+    'midtrans' => [
+        'enabled' => env('MIDTRANS_ENABLED', false),
+        'merchant_id' => env('MIDTRANS_MERCHANT_ID'),
+        'client_key' => env('MIDTRANS_CLIENT_KEY'),
+        'server_key' => env('MIDTRANS_SERVER_KEY'),
+        'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
+        'is_sanitized' => env('MIDTRANS_IS_SANITIZED', true),
+        'is_3ds' => env('MIDTRANS_IS_3DS', true),
+    ],
+
+    'pakasir' => [
+        'enabled' => env('PAKASIR_ENABLED', false),
+        'project_slug' => env('PAKASIR_PROJECT_SLUG'),
+        'api_key' => env('PAKASIR_API_KEY'),
+        'base_url' => env('PAKASIR_BASE_URL', 'https://app.pakasir.com'),
+        'default_payment_method' => env('PAKASIR_DEFAULT_METHOD', 'qris'),
+        'default_redirect_url' => env('PAKASIR_REDIRECT_URL'),
+    ],
+
 ];

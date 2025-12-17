@@ -19,8 +19,6 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             TarifSeeder::class,
             PlayStationSeeder::class,
-            PelangganSeeder::class,
-            VoucherSeeder::class,
         ]);
     }
 }

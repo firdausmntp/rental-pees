@@ -61,8 +61,15 @@ class LaporanTransaksi extends Component
 
     public function render()
     {
-        // Query transaksi dengan filter
+        // Get transaksi IDs that came from kompromi vouchers (should be excluded from main list)
+        $transaksiIdsFromKompromi = Voucher::where('metode_pembayaran', 'kompromi')
+            ->whereNotNull('transaksi_id')
+            ->pluck('transaksi_id')
+            ->toArray();
+
+        // Query transaksi dengan filter - EXCLUDE transaksi dari kompromi voucher
         $transaksis = Transaksi::with(['pelanggan', 'playStation', 'voucher'])
+            ->whereNotIn('id', $transaksiIdsFromKompromi) // Exclude kompromi transactions
             ->when($this->tanggal_awal, function($query) {
                 $query->whereDate('waktu_mulai', '>=', $this->tanggal_awal);
             })
@@ -80,8 +87,20 @@ class LaporanTransaksi extends Component
             ->latest('waktu_mulai')
             ->paginate(10);
 
-        // Statistik - Total transaksi TANPA DOUBLE COUNTING
-        // 1. Hitung transaksi sewa PS yang TIDAK menggunakan voucher
+        // Query voucher kompromi terpisah
+        $kompromis = Voucher::with(['tarif'])
+            ->where('metode_pembayaran', 'kompromi')
+            ->when($this->tanggal_awal, function($query) {
+                $query->whereDate('tanggal_beli', '>=', $this->tanggal_awal);
+            })
+            ->when($this->tanggal_akhir, function($query) {
+                $query->whereDate('tanggal_beli', '<=', $this->tanggal_akhir);
+            })
+            ->latest('tanggal_beli')
+            ->paginate(10);
+
+        // Statistik - Total transaksi TANPA DOUBLE COUNTING dan TANPA KOMPROMI
+        // 1. Hitung transaksi sewa PS yang TIDAK menggunakan voucher DAN bukan dari kompromi
         // Caranya: cari transaksi yang ID-nya TIDAK ADA di vouchers.transaksi_id
         $transaksiIdsYangPakaiVoucher = Voucher::whereNotNull('transaksi_id')
             ->pluck('transaksi_id')
@@ -94,9 +113,10 @@ class LaporanTransaksi extends Component
                 $query->whereDate('waktu_mulai', '<=', $this->tanggal_akhir);
             })
             ->whereNotIn('id', $transaksiIdsYangPakaiVoucher) // Exclude transaksi yang pakai voucher
+            ->whereNotIn('id', $transaksiIdsFromKompromi) // Exclude transaksi dari kompromi
             ->count();
         
-        // 2. Hitung voucher yang sudah DIBELI dan DIBAYAR
+        // 2. Hitung voucher yang sudah DIBELI dan DIBAYAR - EXCLUDE KOMPROMI
         $total_voucher_dibeli = Voucher::when($this->tanggal_awal, function($query) {
                 $query->whereDate('tanggal_beli', '>=', $this->tanggal_awal);
             })
@@ -104,12 +124,13 @@ class LaporanTransaksi extends Component
                 $query->whereDate('tanggal_beli', '<=', $this->tanggal_akhir);
             })
             ->where('status_pembayaran', 'paid')
+            ->where('metode_pembayaran', '!=', 'kompromi') // Exclude kompromi
             ->count();
         
         // Total = Sewa tanpa voucher + Voucher dibeli (no double count!)
         $total_transaksi = $total_transaksi_ps_tanpa_voucher + $total_voucher_dibeli;
 
-        // Hitung total pendapatan dari transaksi
+        // Hitung total pendapatan dari transaksi - EXCLUDE kompromi transactions
         $total_pendapatan = Transaksi::when($this->tanggal_awal, function($query) {
                 $query->whereDate('waktu_mulai', '>=', $this->tanggal_awal);
             })
@@ -117,23 +138,41 @@ class LaporanTransaksi extends Component
                 $query->whereDate('waktu_mulai', '<=', $this->tanggal_akhir);
             })
             ->where('status', 'selesai')
+            ->whereNotIn('id', $transaksiIdsFromKompromi) // Exclude transaksi dari kompromi
             ->sum('total_biaya');
         
-        // Tambahkan pendapatan dari voucher yang sudah dibayar
-        $voucher_pendapatan = Voucher::when($this->tanggal_awal, function($query) {
-                $query->whereDate('tanggal_beli', '>=', $this->tanggal_awal);
+        // Tambahkan pendapatan dari voucher yang sudah dibayar (EXCLUDE kompromi karena kompensasi)
+        $voucher_pendapatan = Voucher::where('metode_pembayaran', '!=', 'kompromi')
+            ->where(function($query) {
+                // Voucher yang dibeli dalam range tanggal dan sudah dibayar
+                $query->where(function($subQuery) {
+                    $subQuery->when($this->tanggal_awal, function($q) {
+                        $q->whereDate('tanggal_beli', '>=', $this->tanggal_awal);
+                    })
+                    ->when($this->tanggal_akhir, function($q) {
+                        $q->whereDate('tanggal_beli', '<=', $this->tanggal_akhir);
+                    })
+                    ->where('status_pembayaran', 'paid')
+                    ->whereNotNull('member_id');
+                })
+                // ATAU voucher yang sudah dipakai (redeemed) dalam range tanggal
+                ->orWhere(function($subQuery) {
+                    $subQuery->when($this->tanggal_awal, function($q) {
+                        $q->whereDate('tanggal_pakai', '>=', $this->tanggal_awal);
+                    })
+                    ->when($this->tanggal_akhir, function($q) {
+                        $q->whereDate('tanggal_pakai', '<=', $this->tanggal_akhir);
+                    })
+                    ->where('status', 'terpakai');
+                });
             })
-            ->when($this->tanggal_akhir, function($query) {
-                $query->whereDate('tanggal_beli', '<=', $this->tanggal_akhir);
-            })
-            ->where('status_pembayaran', 'paid')
             ->sum('total_harga');
         
         $total_pendapatan += $voucher_pendapatan;
 
         // Removed denda calculation since column no longer exists
 
-        // PS terpopuler
+        // PS terpopuler - EXCLUDE transaksi dari kompromi voucher
         $ps_terpopuler = Transaksi::select('play_station_id', DB::raw('COUNT(*) as total'))
             ->when($this->tanggal_awal, function($query) {
                 $query->whereDate('waktu_mulai', '>=', $this->tanggal_awal);
@@ -141,14 +180,15 @@ class LaporanTransaksi extends Component
             ->when($this->tanggal_akhir, function($query) {
                 $query->whereDate('waktu_mulai', '<=', $this->tanggal_akhir);
             })
+            ->whereNotIn('id', $transaksiIdsFromKompromi) // Exclude transaksi dari kompromi
             ->with('playStation')
             ->groupBy('play_station_id')
             ->orderBy('total', 'desc')
             ->limit(5)
             ->get();
 
-        // Pelanggan teraktif - TANPA DOUBLE COUNTING
-        // Step 1: Dari transaksi sewa PS yang TIDAK pakai voucher
+        // Pelanggan teraktif - TANPA DOUBLE COUNTING DAN TANPA KOMPROMI
+        // Step 1: Dari transaksi sewa PS yang TIDAK pakai voucher DAN bukan dari kompromi
         $pelangganStats = [];
         
         // Cari transaksi yang TIDAK pakai voucher
@@ -168,6 +208,7 @@ class LaporanTransaksi extends Component
                 $query->whereDate('waktu_mulai', '<=', $this->tanggal_akhir);
             })
             ->whereNotIn('id', $transaksiIdsYangPakaiVoucher) // HANYA yang TIDAK pakai voucher
+            ->whereNotIn('id', $transaksiIdsFromKompromi) // Exclude transaksi dari kompromi
             ->with(['pelanggan'])
             ->groupBy('pelanggan_id')
             ->get();
@@ -180,7 +221,7 @@ class LaporanTransaksi extends Component
             ];
         }
         
-        // Step 2: Tambahkan aktivitas dari voucher yang dibeli (member beli voucher = aktivitas)
+        // Step 2: Tambahkan aktivitas dari voucher yang dibeli (member beli voucher = aktivitas) - EXCLUDE KOMPROMI
         $vouchersPaidByMember = Voucher::select(
                 'member_id',
                 DB::raw('COUNT(*) as voucher_count'),
@@ -188,6 +229,7 @@ class LaporanTransaksi extends Component
             )
             ->whereNotNull('member_id')
             ->where('status_pembayaran', 'paid')
+            ->where('metode_pembayaran', '!=', 'kompromi')
             ->when($this->tanggal_awal, function($query) {
                 $query->whereDate('tanggal_beli', '>=', $this->tanggal_awal);
             })
@@ -250,6 +292,7 @@ class LaporanTransaksi extends Component
 
         return view('livewire.laporan-transaksi', [
             'transaksis' => $transaksis,
+            'kompromis' => $kompromis,
             'total_transaksi' => $total_transaksi,
             'total_pendapatan' => $total_pendapatan,
             'ps_terpopuler' => $ps_terpopuler,

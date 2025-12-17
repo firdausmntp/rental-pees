@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Actions\Logout;
+use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Component;
 
 new class extends Component
@@ -19,57 +20,74 @@ new class extends Component
 <nav x-data="{ open: false }" class="border-b border-base-200 bg-base-100/90 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-base-100/70">
     @php
         $user = auth()->user();
-        $navLinks = [
-            [
-                'label' => 'Dashboard',
-                'route' => route('dashboard'),
-                'active' => request()->routeIs('dashboard'),
-            ],
-        ];
 
-        if ($user?->isAdmin()) {
-            $navLinks = array_merge($navLinks, [
-                [
-                    'label' => 'PlayStation',
-                    'route' => route('admin.playstation'),
-                    'active' => request()->routeIs('admin.playstation'),
-                ],
-                [
-                    'label' => 'Members',
-                    'route' => route('admin.members'),
-                    'active' => request()->routeIs('admin.members'),
-                ],
-                [
-                    'label' => 'Tarif',
-                    'route' => route('admin.tarif'),
-                    'active' => request()->routeIs('admin.tarif'),
-                ],
-                [
-                    'label' => 'Laporan',
-                    'route' => route('admin.laporan'),
-                    'active' => request()->routeIs('admin.laporan'),
-                ],
-            ]);
+        $makeLink = function (string $label, string $routeName, array $activeRoutes = []) {
+            if (! Route::has($routeName)) {
+                return null;
+            }
+
+            $activePatterns = empty($activeRoutes) ? [$routeName] : $activeRoutes;
+
+            return [
+                'label' => $label,
+                'route' => route($routeName),
+                'active' => request()->routeIs(...$activePatterns),
+            ];
+        };
+
+        $navLinks = [];
+        $dashboardRoutes = [
+            'owner' => 'owner.dashboard',
+            'karyawan' => 'karyawan.dashboard',
+            'member' => 'member.dashboard',
+        ];
+        $dashboardRouteName = $dashboardRoutes[$user->role ?? null] ?? 'dashboard';
+        $dashboardLink = $makeLink('Dashboard', $dashboardRouteName, array_values($dashboardRoutes));
+
+        if (! $dashboardLink) {
+            $dashboardLink = $makeLink('Dashboard', 'dashboard');
         }
 
-        if ($user?->isAdmin() || $user?->isKaryawan()) {
-            $navLinks = array_merge($navLinks, [
-                [
-                    'label' => 'Pelanggan',
-                    'route' => route('pelanggan'),
-                    'active' => request()->routeIs('pelanggan'),
-                ],
-                [
-                    'label' => 'Transaksi Sewa',
-                    'route' => route('transaksi.sewa'),
-                    'active' => request()->routeIs('transaksi.sewa'),
-                ],
-                [
-                    'label' => 'Transaksi Kembali',
-                    'route' => route('transaksi.kembali'),
-                    'active' => request()->routeIs('transaksi.kembali'),
-                ],
-            ]);
+        if ($dashboardLink) {
+            $navLinks[] = $dashboardLink;
+        }
+
+        if ($user?->isOwner()) {
+            foreach ([
+                ['PlayStation', 'owner.playstation'],
+                ['Users', 'owner.users'],
+                ['Voucher', 'owner.voucher'],
+                ['Redeem Voucher', 'owner.voucher.redeem'],
+                ['Laporan', 'owner.laporan'],
+            ] as [$label, $routeName]) {
+                if ($link = $makeLink($label, $routeName)) {
+                    $navLinks[] = $link;
+                }
+            }
+        }
+
+        if ($user?->isKaryawan()) {
+            foreach ([
+                ['Voucher', 'karyawan.voucher'],
+                ['Users', 'karyawan.users'],
+                ['Redeem Voucher', 'karyawan.voucher.redeem'],
+            ] as [$label, $routeName]) {
+                if ($link = $makeLink($label, $routeName)) {
+                    $navLinks[] = $link;
+                }
+            }
+        }
+
+        if ($user?->isMember()) {
+            foreach ([
+                ['Beli Voucher', 'member.beli'],
+                ['Jadwal PS', 'member.jadwal'],
+                ['Redeem Voucher', 'member.redeem'],
+            ] as [$label, $routeName]) {
+                if ($link = $makeLink($label, $routeName)) {
+                    $navLinks[] = $link;
+                }
+            }
         }
     @endphp
 
